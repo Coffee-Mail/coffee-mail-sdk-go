@@ -1,0 +1,38 @@
+name: Reportar bug
+description: Algo não funciona como esperado
+labels: [bug]
+body:
+  - type: textarea
+    id: descricao
+    attributes:
+      label: O que aconteceu
+      description: Descreva o comportamento observado e o esperado.
+    validations:
+      required: true
+  - type: textarea
+    id: reproducao
+    attributes:
+      label: Como reproduzir
+      description: Código mínimo que reproduz o problema. Não inclua chaves de API.
+      render: go
+    validations:
+      required: true
+  - type: input
+    id: sdk
+    attributes:
+      label: Versão do SDK
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: go
+    attributes:
+      label: Versão do Go (go version)
+      placeholder: "go1.24.6"
+    validations:
+      required: true
+  - type: input
+    id: request-id
+    attributes:
+      label: x-request-id (se houver)
+      description: Disponível no campo RequestID do *coffeemail.Error.

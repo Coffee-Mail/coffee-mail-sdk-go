@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+      - name: Tag igual à constante Version
+        run: |
+          VERSION=$(sed -n 's/^const Version = "\(.*\)"$/\1/p' version.go)
+          if [ "v${VERSION}" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::A tag ${GITHUB_REF_NAME} não corresponde a Version=${VERSION} em version.go"
+            exit 1
+          fi
+          grep -q "^## \[${VERSION}\]" CHANGELOG.md || { echo "::error::CHANGELOG.md sem a seção ${VERSION}"; exit 1; }
+      - name: Gates de qualidade
+        run: |
+          go run ./internal/tools/standards ./...
+          go vet ./...
+          go test -race ./...
+      - name: Criar GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v version="$VERSION" '
+            $0 ~ "^## \\[" version "\\]" { found = 1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file release-notes.md
+      - name: Publicar no proxy de módulos do Go
+        run: GOPROXY=https://proxy.golang.org GOFLAGS=-mod=mod go list -m "github.com/${GITHUB_REPOSITORY}@${GITHUB_REF_NAME}"

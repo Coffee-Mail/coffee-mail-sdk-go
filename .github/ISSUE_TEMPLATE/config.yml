@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Vulnerabilidade de segurança
+    url: https://github.com/Coffee-Mail/coffee-mail-sdk-go/security/advisories/new
+    about: Reporte vulnerabilidades de forma privada.

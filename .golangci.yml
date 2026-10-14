@@ -1,0 +1,67 @@
+version: "2"
+
+run:
+  go: "1.24"
+
+linters:
+  default: standard
+  enable:
+    - bodyclose
+    - contextcheck
+    - errorlint
+    - exhaustive
+    - gocritic
+    - godot
+    - gosec
+    - nestif
+    - noctx
+    - nolintlint
+    - revive
+    - unconvert
+    - unparam
+    - usestdlibvars
+  settings:
+    nestif:
+      min-complexity: 4
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+    revive:
+      rules:
+        - name: exported
+        - name: package-comments
+        - name: early-return
+        - name: indent-error-flow
+        - name: superfluous-else
+        - name: unused-parameter
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - gosec
+          - noctx
+      - path: internal/
+        text: "exported .* should have comment"
+        linters:
+          - revive
+      - path: internal/
+        text: "package-comments"
+        linters:
+          - revive
+      - path: internal/i18n/
+        text: "G101"
+        linters:
+          - gosec
+      - path: requester\.go
+        text: "G404"
+        linters:
+          - gosec
+      - path: internal/tools/
+        text: "G304|G703|G704"
+        linters:
+          - gosec
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

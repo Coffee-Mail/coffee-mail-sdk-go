@@ -1,0 +1,17 @@
+name: Sugerir melhoria
+description: Proponha uma funcionalidade ou mudança
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Qual problema isso resolve
+    validations:
+      required: true
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Proposta
+      description: Como você imagina a API? Lembre que os SDKs oficiais mantêm o mesmo contrato.
+    validations:
+      required: true
