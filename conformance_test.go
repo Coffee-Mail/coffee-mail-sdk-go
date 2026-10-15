@@ -73,6 +73,13 @@ func conformanceCases() []conformanceCase {
 		{"domains.delete", "", func(ctx context.Context, c *Client) error { return ignore(c.Domains.Delete(ctx, uuidA)) }},
 		{"domains.getHealth", "", func(ctx context.Context, c *Client) error { return ignore(c.Domains.GetHealth(ctx, uuidA)) }},
 		{"domains.getWarmupStatus", "", func(ctx context.Context, c *Client) error { return ignore(c.Domains.GetWarmupStatus(ctx, uuidA)) }},
+		{"domains.rotateDkim", "", func(ctx context.Context, c *Client) error { return ignore(c.Domains.RotateDKIM(ctx, uuidA)) }},
+		{"domains.setTrackingDomain", "", func(ctx context.Context, c *Client) error {
+			return ignore(c.Domains.SetTrackingDomain(ctx, uuidA, "links.exemplo.com.br"))
+		}},
+		{"domains.removeTrackingDomain", "null", func(ctx context.Context, c *Client) error {
+			return ignore(c.Domains.RemoveTrackingDomain(ctx, uuidA))
+		}},
 		{"templates.create", "", func(ctx context.Context, c *Client) error {
 			return ignore(c.Templates.Create(ctx, &CreateTemplateParams{Name: "Boas-vindas", HTML: "<p>{{nome}}</p>", Format: TemplateFormatHTML, Variables: []TemplateVariable{{Name: "nome"}}}))
 		}},

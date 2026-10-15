@@ -10,6 +10,10 @@ Todas as mudanças relevantes deste projeto são documentadas aqui. O formato se
 - `Broadcast.Metrics` (`*BroadcastMetrics`) com entregues, abertos, cliques, bounces, falhas e suprimidos, preenchido em `Get`.
 - `SendersService.ResendVerification` reenvia o email de verificação com token novo.
 - `Contact.Subscribed` e `Contact.IsSubscribed()` (`false` quando o contato se descadastrou).
+- `DomainsService.RotateDKIM` inicia a rotação da chave DKIM (idempotente) e devolve `*DKIMRotation` com o registro TXT do novo seletor.
+- `DomainsService.SetTrackingDomain` e `DomainsService.RemoveTrackingDomain` cadastram e removem o host de tracking próprio (`*CustomHostStatus`).
+- `DomainDetail.DKIMRotation`, `DomainDetail.ReturnPath`, `DomainDetail.TrackingDomain` e `DomainDetail.TrackingDomainsAvailable` em `DomainsService.Get`.
+- `DomainWarmupStatus.Status` (`DomainWarmupWarming`/`DomainWarmupCompleted`), `TotalDays`, `StartedAt` e `CompletedAt`.
 
 ### Alterado
 

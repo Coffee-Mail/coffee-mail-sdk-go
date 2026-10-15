@@ -42,7 +42,7 @@
 - **Zero dependências de runtime**: só a biblioteca padrão. O transporte é o seu `*http.Client`.
 - **Seguro para concorrência**: crie um `Client` por aplicação e compartilhe entre goroutines.
 - **Retry e paginação automáticos opcionais**: novas tentativas desligadas por padrão (`WithRetry`) e iteradores `iter.Seq2` (`ListAll`) para listas com cursor.
-- **Validado contra o contrato da API**: as 61 operações geram requisições validadas contra o OpenAPI de produto (`spec/product.json`) em `TestConformanceEveryRequestMatchesTheSpec`.
+- **Validado contra o contrato da API**: as 65 operações geram requisições validadas contra o OpenAPI de produto (`spec/product.json`) em `TestConformanceEveryRequestMatchesTheSpec`.
 - **Webhooks verificados com o algoritmo da API**: o subpacote `webhook` passa nos vetores de teste gerados pelo assinador real.
 
 ## 🚦 Status do projeto
@@ -50,7 +50,7 @@
 | Item | Estado |
 | --- | --- |
 | Versão | `0.1.0` (ainda não publicada) |
-| Cobertura da API de produto | 61 operações (todas as do `product.json`, exceto `GET /v1/product/auth/csrf`, exclusiva do dashboard) |
+| Cobertura da API de produto | 65 operações (todas as do `product.json`, exceto `GET /v1/product/auth/csrf`, exclusiva do dashboard) |
 | Idiomas das mensagens de erro | `pt-BR` (padrão) e `en` |
 
 Limitações conhecidas:
@@ -242,6 +242,13 @@ Parâmetros opcionais podem ser omitidos. Onde o valor zero é significativo (po
 | `Delete(ctx, id)` | `DELETE /domains/{id}` |
 | `GetHealth(ctx, id)` | `POST /domains/{id}/health` |
 | `GetWarmupStatus(ctx, id)` | `GET /domains/{id}/warmup` (nil sem aquecimento) |
+| `RotateDKIM(ctx, id)` | `POST /domains/{id}/dkim/rotate` |
+| `SetTrackingDomain(ctx, id, host)` | `PUT /domains/{id}/tracking-domain` |
+| `RemoveTrackingDomain(ctx, id)` | `DELETE /domains/{id}/tracking-domain` (nil em caso de sucesso) |
+
+`Get` traz também a entregabilidade do domínio: `DKIMRotation` (rotação de DKIM pendente, ou nil), `ReturnPath` e `TrackingDomain` (`*CustomHostStatus` com host, alvo do CNAME, verificação e registro DNS, ou nil) e `TrackingDomainsAvailable`. `GetWarmupStatus` informa a fase (`DomainWarmupWarming` ou `DomainWarmupCompleted`), `TotalDays`, `StartedAt` e `CompletedAt`.
+
+`RotateDKIM` é idempotente: enquanto a rotação está pendente, devolve a mesma rotação; a chave em uso só muda quando o registro TXT do novo seletor aparece no DNS. Domínio não verificado responde `ErrConflict` com `APICode` `DOMAIN_NOT_VERIFIED`. Em `SetTrackingDomain`, host inválido responde `ErrValidation` (`INVALID_TRACKING_HOST`) e recurso desligado na plataforma, `ErrConflict` (`TRACKING_DOMAINS_DISABLED`).
 
 ### Templates — `client.Templates`
 
@@ -368,7 +375,7 @@ go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 ```
 
 - Os testes usam um `RoundTripper` falso injetado por `WithHTTPClient`; nenhum teste acessa a rede.
-- `TestConformanceEveryRequestMatchesTheSpec` valida as requisições das 61 operações contra `spec/product.json` e falha se alguma operação do spec ficar sem método.
+- `TestConformanceEveryRequestMatchesTheSpec` valida as requisições das 65 operações contra `spec/product.json` e falha se alguma operação do spec ficar sem método.
 - `webhook` roda os vetores compartilhados de `testdata/webhook_vectors.json`, gerados pelo assinador da API.
 - Cobertura mínima de 85% no CI.
 

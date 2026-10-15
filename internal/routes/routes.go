@@ -23,11 +23,13 @@ const (
 	EmailCancel = Email + "/cancel"
 	EmailResend = Email + "/resend"
 
-	Domains      = product + "/domains"
-	Domain       = Domains + "/" + idPlaceholder
-	DomainVerify = Domain + "/verify"
-	DomainHealth = Domain + "/health"
-	DomainWarmup = Domain + "/warmup"
+	Domains              = product + "/domains"
+	Domain               = Domains + "/" + idPlaceholder
+	DomainVerify         = Domain + "/verify"
+	DomainHealth         = Domain + "/health"
+	DomainWarmup         = Domain + "/warmup"
+	DomainDKIMRotate     = Domain + "/dkim/rotate"
+	DomainTrackingDomain = Domain + "/tracking-domain"
 
 	Templates           = product + "/templates"
 	Template            = Templates + "/" + idPlaceholder
