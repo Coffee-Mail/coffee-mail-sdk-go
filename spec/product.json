@@ -2924,7 +2924,7 @@
       },
       "delete": {
         "requestBody": {
-          "required": true,
+          "required": false,
           "content": {
             "application/json": {
               "schema": {
@@ -4119,7 +4119,7 @@
         },
         "responses": {
           "201": {
-            "description": "Remetente recém-criado, aguardando verificação",
+            "description": "Remetente recém-criado, aguardando verificação pelo link enviado ao endereço cadastrado",
             "content": {
               "application/json": {
                 "schema": {
@@ -4139,10 +4139,6 @@
                       "nullable": true,
                       "description": "Nome de exibição do remetente",
                       "type": "string"
-                    },
-                    "verificationToken": {
-                      "type": "string",
-                      "description": "Token enviado ao email para confirmar a verificação"
                     },
                     "verifiedAt": {
                       "nullable": true,
@@ -4166,13 +4162,12 @@
                     "id",
                     "email",
                     "displayName",
-                    "verificationToken",
                     "verifiedAt",
                     "active",
                     "createdAt"
                   ],
                   "additionalProperties": false,
-                  "description": "Remetente recém-criado, aguardando verificação"
+                  "description": "Remetente recém-criado, aguardando verificação pelo link enviado ao endereço cadastrado"
                 }
               }
             }
@@ -4303,6 +4298,36 @@
                   ],
                   "additionalProperties": false,
                   "description": "Remetente verificado com sucesso"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/product/senders/{id}/resend-verification": {
+      "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "nullable": true,
+                  "enum": [
+                    null
+                  ]
                 }
               }
             }
@@ -4609,6 +4634,10 @@
                             "additionalProperties": {},
                             "description": "Dados extras do contato em formato livre"
                           },
+                          "subscribed": {
+                            "type": "boolean",
+                            "description": "Indica se o contato ainda recebe broadcasts (false após descadastro)"
+                          },
                           "createdAt": {
                             "type": "string",
                             "format": "date-time",
@@ -4622,6 +4651,7 @@
                           "firstName",
                           "lastName",
                           "metadata",
+                          "subscribed",
                           "createdAt"
                         ],
                         "additionalProperties": false,
@@ -4733,6 +4763,10 @@
                       "additionalProperties": {},
                       "description": "Dados extras do contato em formato livre"
                     },
+                    "subscribed": {
+                      "type": "boolean",
+                      "description": "Indica se o contato ainda recebe broadcasts (false após descadastro)"
+                    },
                     "createdAt": {
                       "type": "string",
                       "format": "date-time",
@@ -4746,6 +4780,7 @@
                     "firstName",
                     "lastName",
                     "metadata",
+                    "subscribed",
                     "createdAt"
                   ],
                   "additionalProperties": false,
@@ -5021,6 +5056,12 @@
                     "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
                     "description": "Endereço de e-mail para respostas"
                   },
+                  "scheduledAt": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                    "description": "Data e hora futuras para envio agendado (ISO 8601)"
+                  },
                   "variables": {
                     "type": "object",
                     "additionalProperties": {},
@@ -5083,6 +5124,14 @@
                     },
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "draft",
+                        "scheduled",
+                        "sending",
+                        "sent",
+                        "failed",
+                        "cancelled"
+                      ],
                       "description": "Status atual do broadcast"
                     },
                     "scheduledAt": {
@@ -5280,6 +5329,14 @@
                           },
                           "status": {
                             "type": "string",
+                            "enum": [
+                              "draft",
+                              "scheduled",
+                              "sending",
+                              "sent",
+                              "failed",
+                              "cancelled"
+                            ],
                             "description": "Status atual do broadcast"
                           },
                           "scheduledAt": {
@@ -5392,7 +5449,187 @@
         ],
         "responses": {
           "200": {
-            "description": "Default Response"
+            "description": "Dados de um broadcast com métricas de entrega",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "description": "Identificador único do broadcast"
+                    },
+                    "audienceId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "description": "Identificador da audiência destinatária"
+                    },
+                    "audienceName": {
+                      "nullable": true,
+                      "description": "Nome da audiência destinatária",
+                      "type": "string"
+                    },
+                    "templateId": {
+                      "nullable": true,
+                      "description": "Identificador do template usado no envio",
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "subject": {
+                      "type": "string",
+                      "description": "Assunto do e-mail"
+                    },
+                    "fromEmail": {
+                      "type": "string",
+                      "description": "Endereço de e-mail do remetente"
+                    },
+                    "replyTo": {
+                      "nullable": true,
+                      "description": "Endereço de e-mail para respostas",
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "draft",
+                        "scheduled",
+                        "sending",
+                        "sent",
+                        "failed",
+                        "cancelled"
+                      ],
+                      "description": "Status atual do broadcast"
+                    },
+                    "scheduledAt": {
+                      "nullable": true,
+                      "description": "Data e hora agendadas para o envio",
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                    },
+                    "sentAt": {
+                      "nullable": true,
+                      "description": "Data e hora em que o envio foi concluído",
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                    },
+                    "cancelledAt": {
+                      "nullable": true,
+                      "description": "Data e hora em que o broadcast foi cancelado",
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                    },
+                    "recipientsTotal": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "Total de destinatários do broadcast"
+                    },
+                    "recipientsQueued": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "Quantidade de destinatários enfileirados para envio"
+                    },
+                    "recipientsFailed": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "Quantidade de destinatários com falha no envio"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data de criação do broadcast"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data da última atualização do broadcast"
+                    },
+                    "metrics": {
+                      "type": "object",
+                      "properties": {
+                        "delivered": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "description": "Emails entregues"
+                        },
+                        "opened": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "description": "Emails abertos ao menos uma vez"
+                        },
+                        "clicked": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "description": "Emails com ao menos um clique"
+                        },
+                        "bounced": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "description": "Emails devolvidos (bounce)"
+                        },
+                        "failed": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "description": "Emails com falha definitiva"
+                        },
+                        "suppressed": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "description": "Destinatários pulados por supressão"
+                        }
+                      },
+                      "required": [
+                        "delivered",
+                        "opened",
+                        "clicked",
+                        "bounced",
+                        "failed",
+                        "suppressed"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Métricas agregadas de entrega do broadcast"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "audienceId",
+                    "audienceName",
+                    "templateId",
+                    "subject",
+                    "fromEmail",
+                    "replyTo",
+                    "status",
+                    "scheduledAt",
+                    "sentAt",
+                    "cancelledAt",
+                    "recipientsTotal",
+                    "recipientsQueued",
+                    "recipientsFailed",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Dados de um broadcast com métricas de entrega"
+                }
+              }
+            }
           }
         }
       }
@@ -5526,6 +5763,14 @@
                     },
                     "status": {
                       "type": "string",
+                      "enum": [
+                        "draft",
+                        "scheduled",
+                        "sending",
+                        "sent",
+                        "failed",
+                        "cancelled"
+                      ],
                       "description": "Status atual do broadcast após o cancelamento"
                     },
                     "cancelledAt": {
@@ -7151,20 +7396,6 @@
       }
     }
   },
-  "servers": [
-    {
-      "url": "http://0.0.0.0:3000",
-      "description": "local"
-    },
-    {
-      "url": "https://api.coffeemail.example",
-      "description": "production"
-    },
-    {
-      "url": "https://api.staging.coffeemail.example",
-      "description": "staging"
-    }
-  ],
   "security": [
     {
       "apiKeyHeader": []

@@ -133,6 +133,9 @@ func conformanceCases() []conformanceCase {
 		}},
 		{"senders.list", "", func(ctx context.Context, c *Client) error { return ignore(c.Senders.List(ctx)) }},
 		{"senders.verify", "", func(ctx context.Context, c *Client) error { return ignore(c.Senders.Verify(ctx, uuidA)) }},
+		{"senders.resendVerification", "", func(ctx context.Context, c *Client) error {
+			return c.Senders.ResendVerification(ctx, uuidA)
+		}},
 		{"senders.delete", "", func(ctx context.Context, c *Client) error { return c.Senders.Delete(ctx, uuidA) }},
 		{"suppressions.create", "", func(ctx context.Context, c *Client) error {
 			return ignore(c.Suppressions.Create(ctx, &CreateSuppressionParams{Email: "x@gmail.com", Reason: SuppressionReasonManual}))

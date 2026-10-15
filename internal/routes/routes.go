@@ -51,6 +51,7 @@ const (
 	Senders       = product + "/senders"
 	SendersVerify = Senders + "/verify"
 	Sender        = Senders + "/" + idPlaceholder
+	SenderResend  = Sender + "/resend-verification"
 
 	Suppressions          = product + "/suppressions"
 	SuppressionsBulk      = Suppressions + "/bulk"

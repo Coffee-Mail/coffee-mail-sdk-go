@@ -14,7 +14,15 @@ type Contact struct {
 	FirstName *string        `json:"firstName"`
 	LastName  *string        `json:"lastName"`
 	Metadata  map[string]any `json:"metadata"`
-	CreatedAt time.Time      `json:"createdAt"`
+	// Subscribed é false quando o contato se descadastrou dos broadcasts; nil
+	// equivale a inscrito.
+	Subscribed *bool     `json:"subscribed"`
+	CreatedAt  time.Time `json:"createdAt"`
+}
+
+// IsSubscribed indica se o contato ainda recebe broadcasts.
+func (c Contact) IsSubscribed() bool {
+	return c.Subscribed == nil || *c.Subscribed
 }
 
 // CreateContactParams são os dados de um contato novo.
