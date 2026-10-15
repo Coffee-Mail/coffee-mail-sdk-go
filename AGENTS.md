@@ -15,7 +15,7 @@ go run ./internal/tools/syncspec -check   # snapshot do spec atualizado?
 
 ## Regras inegociáveis
 
-- Contrato idêntico aos SDKs Node.js, Python, PHP e Java: mesmas operações, códigos de erro canônicos, headers, mensagens locais e esquema de webhook.
+- Contrato idêntico aos SDKs Node.js, Python, PHP, Java e Ruby: mesmas operações, códigos de erro canônicos, headers, mensagens locais e esquema de webhook.
 - API pública: só adicionar e depreciar. Nunca renomear, remover ou mudar assinatura.
 - Sem opção de URL base. Testes injetam `*http.Client` com o `fakeTransport`.
 - Zero dependências de runtime; `go.mod` fica em `go 1.24`.

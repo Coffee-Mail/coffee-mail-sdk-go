@@ -37,7 +37,7 @@
 
 ## ✨ Visão geral
 
-- **Mesmo contrato dos SDKs oficiais** (Node.js, Python, PHP, Java): mesmos recursos, mesmos métodos, mesmos códigos de erro e mesmas mensagens locais.
+- **Mesmo contrato dos SDKs oficiais** (Node.js, Python, PHP, Java, Ruby): mesmos recursos, mesmos métodos, mesmos códigos de erro e mesmas mensagens locais.
 - **Idiomático**: todo método recebe `context.Context` e devolve `(T, error)`. O erro é sempre um `*coffeemail.Error`, comparável com `errors.Is` e `errors.As`. Nenhum método entra em `panic`.
 - **Zero dependências de runtime**: só a biblioteca padrão. O transporte é o seu `*http.Client`.
 - **Seguro para concorrência**: crie um `Client` por aplicação e compartilhe entre goroutines.
@@ -409,6 +409,7 @@ Leia o [CONTRIBUTING.md](CONTRIBUTING.md). Vulnerabilidades: [SECURITY.md](SECUR
 | [coffee-mail-sdk-php](https://github.com/Coffee-Mail/coffee-mail-sdk-php) | SDK oficial PHP (`coffeemail/coffeemail-php`) |
 | [coffee-mail-sdk-java](https://github.com/Coffee-Mail/coffee-mail-sdk-java) | SDK oficial Java (`br.com.coffeemail:coffeemail-java`) |
 | **coffee-mail-sdk-go** (você está aqui) | SDK oficial Go (`github.com/Coffee-Mail/coffee-mail-sdk-go`) |
+| [coffee-mail-sdk-ruby](https://github.com/Coffee-Mail/coffee-mail-sdk-ruby) | SDK oficial Ruby (`coffeemail`) |
 | [coffee-mail-laravel](https://github.com/Coffee-Mail/coffee-mail-laravel) | Integração Laravel (`coffeemail/coffeemail-laravel`) |
 | [coffee-mail-sdk-workbench](https://github.com/Coffee-Mail/coffee-mail-sdk-workbench) | Bancada de validação dos SDKs por spec |
 
