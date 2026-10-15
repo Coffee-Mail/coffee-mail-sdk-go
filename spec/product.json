@@ -2900,6 +2900,222 @@
                         "additionalProperties": false
                       },
                       "description": "Registros DNS pendentes que o cliente precisa publicar"
+                    },
+                    "dkimRotation": {
+                      "nullable": true,
+                      "description": "Rotação de DKIM em andamento, ou null quando não há rotação pendente",
+                      "type": "object",
+                      "properties": {
+                        "domainId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                          "description": "Identificador único do domínio"
+                        },
+                        "selector": {
+                          "type": "string",
+                          "description": "Seletor DKIM pendente, que passa a valer após a propagação do DNS"
+                        },
+                        "startedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                          "description": "Data e hora em que a rotação foi iniciada"
+                        },
+                        "record": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "TXT",
+                                "CNAME"
+                              ],
+                              "description": "Tipo do registro DNS a ser publicado"
+                            },
+                            "host": {
+                              "type": "string",
+                              "description": "Nome do host/subdomínio onde o registro deve ser criado"
+                            },
+                            "value": {
+                              "type": "string",
+                              "description": "Valor que deve ser publicado no registro DNS"
+                            },
+                            "ttl": {
+                              "description": "TTL em segundos sugerido para o registro",
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "isInfrastructure": {
+                              "description": "Indica se o registro pertence à infraestrutura global da plataforma",
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "host",
+                            "value"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Registro TXT que precisa ser publicado para concluir a rotação"
+                        }
+                      },
+                      "required": [
+                        "domainId",
+                        "selector",
+                        "startedAt",
+                        "record"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "returnPath": {
+                      "nullable": true,
+                      "description": "Return-path próprio (bounces.<domínio>), ou null quando a plataforma não oferece return-path",
+                      "type": "object",
+                      "properties": {
+                        "host": {
+                          "type": "string",
+                          "description": "Host do domínio do cliente que precisa apontar para a plataforma"
+                        },
+                        "target": {
+                          "type": "string",
+                          "description": "Host da plataforma para onde o CNAME deve apontar"
+                        },
+                        "verified": {
+                          "type": "boolean",
+                          "description": "Indica se o CNAME foi encontrado apontando para o alvo"
+                        },
+                        "verifiedAt": {
+                          "description": "Data e hora em que o CNAME foi confirmado",
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                          "nullable": true
+                        },
+                        "record": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "TXT",
+                                "CNAME"
+                              ],
+                              "description": "Tipo do registro DNS a ser publicado"
+                            },
+                            "host": {
+                              "type": "string",
+                              "description": "Nome do host/subdomínio onde o registro deve ser criado"
+                            },
+                            "value": {
+                              "type": "string",
+                              "description": "Valor que deve ser publicado no registro DNS"
+                            },
+                            "ttl": {
+                              "description": "TTL em segundos sugerido para o registro",
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "isInfrastructure": {
+                              "description": "Indica se o registro pertence à infraestrutura global da plataforma",
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "host",
+                            "value"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Registro CNAME a publicar"
+                        }
+                      },
+                      "required": [
+                        "host",
+                        "target",
+                        "verified",
+                        "verifiedAt",
+                        "record"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "trackingDomain": {
+                      "nullable": true,
+                      "description": "Host de tracking próprio do domínio, ou null quando não há host cadastrado ou o recurso está desligado",
+                      "type": "object",
+                      "properties": {
+                        "host": {
+                          "type": "string",
+                          "description": "Host do domínio do cliente que precisa apontar para a plataforma"
+                        },
+                        "target": {
+                          "type": "string",
+                          "description": "Host da plataforma para onde o CNAME deve apontar"
+                        },
+                        "verified": {
+                          "type": "boolean",
+                          "description": "Indica se o CNAME foi encontrado apontando para o alvo"
+                        },
+                        "verifiedAt": {
+                          "description": "Data e hora em que o CNAME foi confirmado",
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                          "nullable": true
+                        },
+                        "record": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "TXT",
+                                "CNAME"
+                              ],
+                              "description": "Tipo do registro DNS a ser publicado"
+                            },
+                            "host": {
+                              "type": "string",
+                              "description": "Nome do host/subdomínio onde o registro deve ser criado"
+                            },
+                            "value": {
+                              "type": "string",
+                              "description": "Valor que deve ser publicado no registro DNS"
+                            },
+                            "ttl": {
+                              "description": "TTL em segundos sugerido para o registro",
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "isInfrastructure": {
+                              "description": "Indica se o registro pertence à infraestrutura global da plataforma",
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "host",
+                            "value"
+                          ],
+                          "additionalProperties": false,
+                          "description": "Registro CNAME a publicar"
+                        }
+                      },
+                      "required": [
+                        "host",
+                        "target",
+                        "verified",
+                        "verifiedAt",
+                        "record"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "trackingDomainsAvailable": {
+                      "type": "boolean",
+                      "description": "Indica se a plataforma permite cadastrar um host de tracking próprio"
                     }
                   },
                   "required": [
@@ -2913,7 +3129,11 @@
                     "verifiedAt",
                     "lastCheckAt",
                     "createdAt",
-                    "dnsRecordsToPublish"
+                    "dnsRecordsToPublish",
+                    "dkimRotation",
+                    "returnPath",
+                    "trackingDomain",
+                    "trackingDomainsAvailable"
                   ],
                   "additionalProperties": false
                 }
@@ -3503,6 +3723,14 @@
                       "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
                       "description": "Identificador único do domínio"
                     },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "warming",
+                        "completed"
+                      ],
+                      "description": "warming enquanto a rampa está ativa; completed quando terminou e não há mais limite"
+                    },
                     "currentDay": {
                       "type": "integer",
                       "minimum": 0,
@@ -3538,19 +3766,346 @@
                       "nullable": true,
                       "description": "Data do último envio registrado para o domínio",
                       "type": "string"
+                    },
+                    "totalDays": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "exclusiveMinimum": true,
+                      "maximum": 9007199254740991,
+                      "description": "Duração total da rampa de aquecimento, em dias"
+                    },
+                    "startedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Início do aquecimento (verificação do domínio)"
+                    },
+                    "completedAt": {
+                      "nullable": true,
+                      "description": "Quando o aquecimento terminou; nulo enquanto está em andamento",
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
                     }
                   },
                   "required": [
                     "domainId",
+                    "status",
                     "currentDay",
                     "dailyQuota",
                     "sentToday",
                     "remainingToday",
                     "quotaUsedPercent",
-                    "lastSendDate"
+                    "lastSendDate",
+                    "totalDays",
+                    "startedAt",
+                    "completedAt"
                   ],
                   "additionalProperties": false,
                   "description": "Status atual do aquecimento (warmup) de envio do domínio"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/product/domains/{id}/dkim/rotate": {
+      "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identificador do domínio"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rotação de DKIM pendente: a chave em uso só muda quando o registro TXT do novo seletor for encontrado no DNS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "domainId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "description": "Identificador único do domínio"
+                    },
+                    "selector": {
+                      "type": "string",
+                      "description": "Seletor DKIM pendente, que passa a valer após a propagação do DNS"
+                    },
+                    "startedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data e hora em que a rotação foi iniciada"
+                    },
+                    "record": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "TXT",
+                            "CNAME"
+                          ],
+                          "description": "Tipo do registro DNS a ser publicado"
+                        },
+                        "host": {
+                          "type": "string",
+                          "description": "Nome do host/subdomínio onde o registro deve ser criado"
+                        },
+                        "value": {
+                          "type": "string",
+                          "description": "Valor que deve ser publicado no registro DNS"
+                        },
+                        "ttl": {
+                          "description": "TTL em segundos sugerido para o registro",
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "isInfrastructure": {
+                          "description": "Indica se o registro pertence à infraestrutura global da plataforma",
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "host",
+                        "value"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Registro TXT que precisa ser publicado para concluir a rotação"
+                    }
+                  },
+                  "required": [
+                    "domainId",
+                    "selector",
+                    "startedAt",
+                    "record"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Rotação de DKIM pendente: a chave em uso só muda quando o registro TXT do novo seletor for encontrado no DNS"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/product/domains/{id}/tracking-domain": {
+      "put": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "host": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 253,
+                    "description": "Subdomínio do domínio de envio usado nos links de abertura e clique"
+                  }
+                },
+                "required": [
+                  "host"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identificador do domínio"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "host": {
+                      "type": "string",
+                      "description": "Host do domínio do cliente que precisa apontar para a plataforma"
+                    },
+                    "target": {
+                      "type": "string",
+                      "description": "Host da plataforma para onde o CNAME deve apontar"
+                    },
+                    "verified": {
+                      "type": "boolean",
+                      "description": "Indica se o CNAME foi encontrado apontando para o alvo"
+                    },
+                    "verifiedAt": {
+                      "description": "Data e hora em que o CNAME foi confirmado",
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "nullable": true
+                    },
+                    "record": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "TXT",
+                            "CNAME"
+                          ],
+                          "description": "Tipo do registro DNS a ser publicado"
+                        },
+                        "host": {
+                          "type": "string",
+                          "description": "Nome do host/subdomínio onde o registro deve ser criado"
+                        },
+                        "value": {
+                          "type": "string",
+                          "description": "Valor que deve ser publicado no registro DNS"
+                        },
+                        "ttl": {
+                          "description": "TTL em segundos sugerido para o registro",
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "isInfrastructure": {
+                          "description": "Indica se o registro pertence à infraestrutura global da plataforma",
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "host",
+                        "value"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Registro CNAME a publicar"
+                    }
+                  },
+                  "required": [
+                    "host",
+                    "target",
+                    "verified",
+                    "verifiedAt",
+                    "record"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identificador do domínio"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "nullable": true,
+                  "type": "object",
+                  "properties": {
+                    "host": {
+                      "type": "string",
+                      "description": "Host do domínio do cliente que precisa apontar para a plataforma"
+                    },
+                    "target": {
+                      "type": "string",
+                      "description": "Host da plataforma para onde o CNAME deve apontar"
+                    },
+                    "verified": {
+                      "type": "boolean",
+                      "description": "Indica se o CNAME foi encontrado apontando para o alvo"
+                    },
+                    "verifiedAt": {
+                      "description": "Data e hora em que o CNAME foi confirmado",
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "nullable": true
+                    },
+                    "record": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "TXT",
+                            "CNAME"
+                          ],
+                          "description": "Tipo do registro DNS a ser publicado"
+                        },
+                        "host": {
+                          "type": "string",
+                          "description": "Nome do host/subdomínio onde o registro deve ser criado"
+                        },
+                        "value": {
+                          "type": "string",
+                          "description": "Valor que deve ser publicado no registro DNS"
+                        },
+                        "ttl": {
+                          "description": "TTL em segundos sugerido para o registro",
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "isInfrastructure": {
+                          "description": "Indica se o registro pertence à infraestrutura global da plataforma",
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "host",
+                        "value"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Registro CNAME a publicar"
+                    }
+                  },
+                  "required": [
+                    "host",
+                    "target",
+                    "verified",
+                    "verifiedAt",
+                    "record"
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
