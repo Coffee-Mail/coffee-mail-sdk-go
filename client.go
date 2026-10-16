@@ -32,6 +32,8 @@ type Client struct {
 	Webhooks *WebhooksService
 	// Stats consulta métricas de envio.
 	Stats *StatsService
+	// Validation valida endereços de email antes do envio.
+	Validation *ValidationService
 
 	introspection *introspectionCache
 }
@@ -63,6 +65,7 @@ func NewClient(apiKey string, opts ...Option) (*Client, error) {
 		Suppressions:  &SuppressionsService{r: r},
 		Webhooks:      &WebhooksService{r: r},
 		Stats:         &StatsService{r: r},
+		Validation:    &ValidationService{r: r},
 		introspection: newIntrospectionCache(r, cfg.now),
 	}, nil
 }

@@ -101,6 +101,13 @@ func conformanceCases() []conformanceCase {
 		{"templates.testSend", "", func(ctx context.Context, c *Client) error {
 			return ignore(c.Templates.TestSend(ctx, uuidA, &TestSendTemplateParams{To: "teste@gmail.com"}))
 		}},
+		{"templates.listVersions", "", func(ctx context.Context, c *Client) error {
+			return ignore(c.Templates.ListVersions(ctx, uuidA, &OffsetParams{Limit: 20, Offset: 20}))
+		}},
+		{"templates.getVersion", "", func(ctx context.Context, c *Client) error { return ignore(c.Templates.GetVersion(ctx, uuidA, 2)) }},
+		{"templates.restoreVersion", "", func(ctx context.Context, c *Client) error {
+			return ignore(c.Templates.RestoreVersion(ctx, uuidA, 2))
+		}},
 		{"audiences.create", "", func(ctx context.Context, c *Client) error {
 			return ignore(c.Audiences.Create(ctx, &CreateAudienceParams{Name: "Clientes"}))
 		}},
@@ -175,6 +182,21 @@ func conformanceCases() []conformanceCase {
 			return ignore(c.Webhooks.ListDeliveries(ctx, uuidA, &ListWebhookDeliveriesParams{Status: WebhookDeliveryFailed, Limit: 5}))
 		}},
 		{"webhooks.test", "", func(ctx context.Context, c *Client) error { return ignore(c.Webhooks.Test(ctx, uuidA)) }},
+		{"webhooks.getDelivery", "", func(ctx context.Context, c *Client) error {
+			return ignore(c.Webhooks.GetDelivery(ctx, uuidA, uuidB))
+		}},
+		{"webhooks.replayDelivery", "", func(ctx context.Context, c *Client) error {
+			return ignore(c.Webhooks.ReplayDelivery(ctx, uuidA, uuidB))
+		}},
+		{"validation.validate", "", func(ctx context.Context, c *Client) error {
+			return ignore(c.Validation.Validate(ctx, []string{"ana@gmail.com", "nao-e-email"}))
+		}},
+		{"emails.sendWithTemplateAlias", "", func(ctx context.Context, c *Client) error {
+			return ignore(c.Emails.Send(ctx, &SendEmailParams{
+				From: Address{Email: "no-reply@exemplo.com.br"}, To: []Address{{Email: "cliente@gmail.com"}},
+				TemplateID: "boas-vindas", Variables: map[string]any{"nome": "Ana"},
+			}))
+		}},
 		{"stats.get", "", func(ctx context.Context, c *Client) error {
 			return ignore(c.Stats.Get(ctx, &GetStatsParams{Period: StatsPeriodLast30Days, Granularity: StatsGranularityDay}))
 		}},
