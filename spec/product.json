@@ -338,9 +338,10 @@
                   },
                   "templateId": {
                     "type": "string",
-                    "format": "uuid",
-                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                    "description": "ID do template usado para montar o e-mail"
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "pattern": "^[a-z0-9_-]+$",
+                    "description": "Id ou alias do template usado para montar o e-mail"
                   },
                   "variables": {
                     "type": "object",
@@ -1061,9 +1062,10 @@
                     },
                     "templateId": {
                       "type": "string",
-                      "format": "uuid",
-                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                      "description": "ID do template usado para montar o e-mail"
+                      "minLength": 1,
+                      "maxLength": 100,
+                      "pattern": "^[a-z0-9_-]+$",
+                      "description": "Id ou alias do template usado para montar o e-mail"
                     },
                     "variables": {
                       "type": "object",
@@ -2508,6 +2510,250 @@
                   ],
                   "additionalProperties": false,
                   "description": "Listagem paginável de entregas de um webhook"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/product/webhooks/{id}/deliveries/{deliveryId}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identificador do webhook"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "deliveryId",
+            "required": true,
+            "description": "Identificador da entrega"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalhe de uma entrega de webhook, com o corpo enviado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "description": "Identificador da tentativa de entrega"
+                    },
+                    "webhookId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "description": "Identificador do webhook associado"
+                    },
+                    "emailEventId": {
+                      "nullable": true,
+                      "description": "Evento de e-mail que originou a entrega",
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "eventType": {
+                      "type": "string",
+                      "description": "Tipo de evento disparado (ex: email.delivered)"
+                    },
+                    "responseStatus": {
+                      "nullable": true,
+                      "description": "Status HTTP retornado pelo endpoint de destino",
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "responseBody": {
+                      "nullable": true,
+                      "description": "Corpo da resposta retornada pelo endpoint de destino",
+                      "type": "string"
+                    },
+                    "attempts": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Quantidade de tentativas de envio já realizadas"
+                    },
+                    "lastError": {
+                      "nullable": true,
+                      "description": "Mensagem do último erro ocorrido no envio",
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Status atual da entrega (pending, success, failed ou exhausted)"
+                    },
+                    "nextRunAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data e hora da próxima tentativa de reenvio"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data e hora em que a entrega foi criada"
+                    },
+                    "requestPayload": {
+                      "type": "string",
+                      "description": "Corpo JSON enviado ao endpoint de destino"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "webhookId",
+                    "emailEventId",
+                    "eventType",
+                    "responseStatus",
+                    "responseBody",
+                    "attempts",
+                    "lastError",
+                    "status",
+                    "nextRunAt",
+                    "createdAt",
+                    "requestPayload"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Detalhe de uma entrega de webhook, com o corpo enviado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/product/webhooks/{id}/deliveries/{deliveryId}/replay": {
+      "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identificador do webhook"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "deliveryId",
+            "required": true,
+            "description": "Identificador da entrega"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Detalhe de uma entrega de webhook, com o corpo enviado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "description": "Identificador da tentativa de entrega"
+                    },
+                    "webhookId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "description": "Identificador do webhook associado"
+                    },
+                    "emailEventId": {
+                      "nullable": true,
+                      "description": "Evento de e-mail que originou a entrega",
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "eventType": {
+                      "type": "string",
+                      "description": "Tipo de evento disparado (ex: email.delivered)"
+                    },
+                    "responseStatus": {
+                      "nullable": true,
+                      "description": "Status HTTP retornado pelo endpoint de destino",
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "responseBody": {
+                      "nullable": true,
+                      "description": "Corpo da resposta retornada pelo endpoint de destino",
+                      "type": "string"
+                    },
+                    "attempts": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Quantidade de tentativas de envio já realizadas"
+                    },
+                    "lastError": {
+                      "nullable": true,
+                      "description": "Mensagem do último erro ocorrido no envio",
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "Status atual da entrega (pending, success, failed ou exhausted)"
+                    },
+                    "nextRunAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data e hora da próxima tentativa de reenvio"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data e hora em que a entrega foi criada"
+                    },
+                    "requestPayload": {
+                      "type": "string",
+                      "description": "Corpo JSON enviado ao endpoint de destino"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "webhookId",
+                    "emailEventId",
+                    "eventType",
+                    "responseStatus",
+                    "responseBody",
+                    "attempts",
+                    "lastError",
+                    "status",
+                    "nextRunAt",
+                    "createdAt",
+                    "requestPayload"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Detalhe de uma entrega de webhook, com o corpo enviado"
                 }
               }
             }
@@ -7941,6 +8187,587 @@
                     "success",
                     "messageId",
                     "recipient"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/product/templates/{id}/versions": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": true,
+              "maximum": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Quantidade de versões por página"
+          },
+          {
+            "schema": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "description": "Deslocamento da página"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identificador do template"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Número da versão, crescente a partir de 1"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Nome do template nesta versão"
+                          },
+                          "subject": {
+                            "nullable": true,
+                            "description": "Assunto do template nesta versão",
+                            "type": "string"
+                          },
+                          "createdBy": {
+                            "nullable": true,
+                            "description": "Usuário que gerou a versão, ou null quando veio de API key",
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                            "description": "Data em que a versão foi gravada"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "name",
+                          "subject",
+                          "createdBy",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Versões, da mais recente para a mais antiga"
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Total de versões do template"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "total"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/product/templates/{id}/versions/{version}": {
+      "get": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identificador do template"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "description": "Número da versão"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Número da versão, crescente a partir de 1"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Nome do template nesta versão"
+                    },
+                    "subject": {
+                      "nullable": true,
+                      "description": "Assunto do template nesta versão",
+                      "type": "string"
+                    },
+                    "createdBy": {
+                      "nullable": true,
+                      "description": "Usuário que gerou a versão, ou null quando veio de API key",
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data em que a versão foi gravada"
+                    },
+                    "templateId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "description": "Identificador do template"
+                    },
+                    "preheader": {
+                      "nullable": true,
+                      "description": "Preheader nesta versão",
+                      "type": "string"
+                    },
+                    "html": {
+                      "type": "string",
+                      "description": "HTML nesta versão"
+                    },
+                    "contentJson": {
+                      "nullable": true,
+                      "description": "Estado do editor visual nesta versão",
+                      "type": "object",
+                      "additionalProperties": {}
+                    },
+                    "textPayload": {
+                      "nullable": true,
+                      "description": "Versão em texto simples nesta versão",
+                      "type": "string"
+                    },
+                    "variables": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 255,
+                            "description": "Nome da variável usada no template"
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 255,
+                            "description": "Descrição do propósito da variável"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "string",
+                              "number",
+                              "color"
+                            ],
+                            "description": "Tipo da variável"
+                          },
+                          "fallbackValue": {
+                            "type": "string",
+                            "maxLength": 500,
+                            "description": "Valor padrão de fallback"
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Variáveis nesta versão"
+                    },
+                    "format": {
+                      "type": "string",
+                      "enum": [
+                        "html",
+                        "react"
+                      ],
+                      "description": "Formato do código-fonte nesta versão"
+                    },
+                    "sourceLocale": {
+                      "type": "string",
+                      "enum": [
+                        "pt-BR",
+                        "en",
+                        "es"
+                      ],
+                      "description": "Idioma de origem nesta versão"
+                    }
+                  },
+                  "required": [
+                    "version",
+                    "name",
+                    "subject",
+                    "createdBy",
+                    "createdAt",
+                    "templateId",
+                    "preheader",
+                    "html",
+                    "contentJson",
+                    "textPayload",
+                    "variables",
+                    "format",
+                    "sourceLocale"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/product/templates/{id}/versions/{version}/restore": {
+      "post": {
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Identificador do template"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "description": "Número da versão"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "description": "Identificador único do template"
+                    },
+                    "organisationId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "description": "Identificador da organização dona do template"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Nome do template"
+                    },
+                    "alias": {
+                      "nullable": true,
+                      "type": "string",
+                      "description": "Identificador amigável único para invocação via API ou SDK"
+                    },
+                    "subject": {
+                      "nullable": true,
+                      "type": "string",
+                      "description": "Assunto padrão do e-mail"
+                    },
+                    "preheader": {
+                      "nullable": true,
+                      "type": "string",
+                      "description": "Texto de pré-visualização na caixa de entrada"
+                    },
+                    "html": {
+                      "type": "string",
+                      "description": "Código-fonte HTML compilado do template"
+                    },
+                    "contentJson": {
+                      "nullable": true,
+                      "type": "object",
+                      "additionalProperties": {},
+                      "description": "Estado estruturado da árvore de blocos visuais"
+                    },
+                    "textPayload": {
+                      "nullable": true,
+                      "type": "string",
+                      "description": "Versão em texto simples do template"
+                    },
+                    "variables": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 255,
+                            "description": "Nome da variável usada no template"
+                          },
+                          "description": {
+                            "type": "string",
+                            "maxLength": 255,
+                            "description": "Descrição do propósito da variável"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "string",
+                              "number",
+                              "color"
+                            ],
+                            "description": "Tipo da variável"
+                          },
+                          "fallbackValue": {
+                            "type": "string",
+                            "maxLength": 500,
+                            "description": "Valor padrão de fallback"
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Variáveis disponíveis para interpolação no template"
+                    },
+                    "isActive": {
+                      "type": "boolean",
+                      "description": "Indica se o template está ativo para uso"
+                    },
+                    "format": {
+                      "type": "string",
+                      "enum": [
+                        "html",
+                        "react"
+                      ],
+                      "description": "Formato do código-fonte do template"
+                    },
+                    "sourceLocale": {
+                      "type": "string",
+                      "enum": [
+                        "pt-BR",
+                        "en",
+                        "es"
+                      ],
+                      "description": "Idioma de origem do conteúdo do template"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data de criação do template"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data da última atualização do template"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "organisationId",
+                    "name",
+                    "alias",
+                    "subject",
+                    "preheader",
+                    "html",
+                    "contentJson",
+                    "textPayload",
+                    "variables",
+                    "isActive",
+                    "format",
+                    "sourceLocale",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/product/validate": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "emails": {
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 320
+                    }
+                  }
+                },
+                "required": [
+                  "emails"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "email": {
+                            "type": "string"
+                          },
+                          "formatValid": {
+                            "type": "boolean"
+                          },
+                          "mxValid": {
+                            "type": "boolean"
+                          },
+                          "isDisposable": {
+                            "type": "boolean"
+                          },
+                          "reason": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "email",
+                          "formatValid",
+                          "mxValid",
+                          "isDisposable"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "validCount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "invalidCount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "credits": {
+                      "type": "object",
+                      "properties": {
+                        "limit": {
+                          "nullable": true,
+                          "description": "Créditos de validação do mês, ou null quando ilimitado",
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "used": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "description": "Créditos usados no mês"
+                        },
+                        "remaining": {
+                          "nullable": true,
+                          "description": "Créditos restantes no mês, ou null quando ilimitado",
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "limit",
+                        "used",
+                        "remaining"
+                      ],
+                      "additionalProperties": false,
+                      "description": "Saldo de créditos de validação da organização após esta chamada"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "validCount",
+                    "invalidCount",
+                    "credits"
                   ],
                   "additionalProperties": false
                 }
