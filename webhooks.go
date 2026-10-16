@@ -145,6 +145,13 @@ type WebhookDelivery struct {
 	CreatedAt      time.Time             `json:"createdAt"`
 }
 
+// WebhookDeliveryDetail é uma entrega de webhook com o corpo enviado ao endpoint.
+type WebhookDeliveryDetail struct {
+	WebhookDelivery
+	// RequestPayload é o corpo JSON enviado ao endpoint de destino.
+	RequestPayload string `json:"requestPayload"`
+}
+
 // ListWebhookDeliveriesParams filtra as entregas de um webhook.
 type ListWebhookDeliveriesParams struct {
 	EventType WebhookEvent
@@ -230,4 +237,18 @@ func (s *WebhooksService) ListDeliveries(ctx context.Context, id string, params 
 // Test dispara um evento de teste para o webhook.
 func (s *WebhooksService) Test(ctx context.Context, id string) (*TestWebhookResponse, error) {
 	return call[TestWebhookResponse](ctx, s.r, post(routes.Expand(routes.WebhookTest, id), nil))
+}
+
+// GetDelivery devolve uma entrega do webhook com o corpo enviado. Entrega
+// inexistente gera [ErrNotFound] com APICode WEBHOOK_DELIVERY_NOT_FOUND.
+func (s *WebhooksService) GetDelivery(ctx context.Context, id, deliveryID string) (*WebhookDeliveryDetail, error) {
+	return call[WebhookDeliveryDetail](ctx, s.r, get(routes.ExpandDelivery(routes.WebhookDelivery, id, deliveryID)))
+}
+
+// ReplayDelivery reenfileira o mesmo corpo de uma entrega e devolve a entrega
+// nova. Entrega ainda pendente gera [ErrConflict] com APICode
+// WEBHOOK_DELIVERY_PENDING; webhook pausado ou desativado, [ErrConflict] com
+// APICode WEBHOOK_NOT_ACTIVE.
+func (s *WebhooksService) ReplayDelivery(ctx context.Context, id, deliveryID string) (*WebhookDeliveryDetail, error) {
+	return call[WebhookDeliveryDetail](ctx, s.r, post(routes.ExpandDelivery(routes.WebhookReplay, id, deliveryID), nil))
 }

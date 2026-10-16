@@ -158,6 +158,37 @@ type TestSendResponse struct {
 	Recipient string `json:"recipient"`
 }
 
+// TemplateVersionSummary é uma versão gravada de um template, sem o conteúdo.
+type TemplateVersionSummary struct {
+	// Version é o número da versão, crescente a partir de 1.
+	Version int     `json:"version"`
+	Name    string  `json:"name"`
+	Subject *string `json:"subject"`
+	// CreatedBy é o usuário que gerou a versão, ou nil quando veio de chave de API.
+	CreatedBy *string   `json:"createdBy"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+// TemplateVersion é uma versão gravada de um template, com o conteúdo completo.
+type TemplateVersion struct {
+	TemplateVersionSummary
+	TemplateID   string             `json:"templateId"`
+	Preheader    *string            `json:"preheader"`
+	HTML         string             `json:"html"`
+	ContentJSON  map[string]any     `json:"contentJson"`
+	TextPayload  *string            `json:"textPayload"`
+	Variables    []TemplateVariable `json:"variables"`
+	Format       TemplateFormat     `json:"format"`
+	SourceLocale TemplateLocale     `json:"sourceLocale"`
+}
+
+// ListTemplateVersionsResponse é uma página de versões, da mais recente para a
+// mais antiga.
+type ListTemplateVersionsResponse struct {
+	Data  []TemplateVersionSummary `json:"data"`
+	Total int                      `json:"total"`
+}
+
 // TemplatesService gerencia templates de email.
 type TemplatesService struct {
 	r *requester
@@ -215,4 +246,23 @@ func (s *TemplatesService) TestRender(ctx context.Context, params *TestRenderTem
 // TestSend envia o template salvo para um destinatário de teste.
 func (s *TemplatesService) TestSend(ctx context.Context, id string, params *TestSendTemplateParams) (*TestSendResponse, error) {
 	return call[TestSendResponse](ctx, s.r, post(routes.Expand(routes.TemplateTestSend, id), derefOrZero(params)))
+}
+
+// ListVersions lista as versões gravadas do template, da mais recente para a
+// mais antiga. params pode ser nil; Limit vai de 1 a 100 (padrão da API: 20).
+func (s *TemplatesService) ListVersions(ctx context.Context, id string, params *OffsetParams) (*ListTemplateVersionsResponse, error) {
+	return call[ListTemplateVersionsResponse](ctx, s.r, get(routes.Expand(routes.TemplateVersions, id)).withQuery(params.values()))
+}
+
+// GetVersion devolve uma versão do template com o conteúdo completo. Versão
+// inexistente gera [ErrNotFound] com APICode TEMPLATE_VERSION_NOT_FOUND.
+func (s *TemplatesService) GetVersion(ctx context.Context, id string, version int) (*TemplateVersion, error) {
+	return call[TemplateVersion](ctx, s.r, get(routes.ExpandVersion(routes.TemplateVersion, id, version)))
+}
+
+// RestoreVersion restaura o conteúdo de uma versão no template e devolve o
+// template atualizado. Versão inexistente gera [ErrNotFound] com APICode
+// TEMPLATE_VERSION_NOT_FOUND.
+func (s *TemplatesService) RestoreVersion(ctx context.Context, id string, version int) (*Template, error) {
+	return call[Template](ctx, s.r, post(routes.ExpandVersion(routes.TemplateRestore, id, version), nil))
 }

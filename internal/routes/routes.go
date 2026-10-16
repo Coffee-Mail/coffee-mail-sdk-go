@@ -2,6 +2,7 @@ package routes
 
 import (
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -10,6 +11,8 @@ const (
 
 	idPlaceholder        = "{id}"
 	contactIDPlaceholder = "{contactId}"
+	versionPlaceholder   = "{version}"
+	deliveryPlaceholder  = "{deliveryId}"
 
 	product = "/v1/product"
 
@@ -23,11 +26,13 @@ const (
 	EmailCancel = Email + "/cancel"
 	EmailResend = Email + "/resend"
 
-	Domains      = product + "/domains"
-	Domain       = Domains + "/" + idPlaceholder
-	DomainVerify = Domain + "/verify"
-	DomainHealth = Domain + "/health"
-	DomainWarmup = Domain + "/warmup"
+	Domains              = product + "/domains"
+	Domain               = Domains + "/" + idPlaceholder
+	DomainVerify         = Domain + "/verify"
+	DomainHealth         = Domain + "/health"
+	DomainWarmup         = Domain + "/warmup"
+	DomainDKIMRotate     = Domain + "/dkim/rotate"
+	DomainTrackingDomain = Domain + "/tracking-domain"
 
 	Templates           = product + "/templates"
 	Template            = Templates + "/" + idPlaceholder
@@ -35,6 +40,9 @@ const (
 	TemplatesFormat     = Templates + "/format"
 	TemplatesTestRender = Templates + "/test-render"
 	TemplateTestSend    = Template + "/test-send"
+	TemplateVersions    = Template + "/versions"
+	TemplateVersion     = TemplateVersions + "/" + versionPlaceholder
+	TemplateRestore     = TemplateVersion + "/restore"
 
 	Audiences            = product + "/audiences"
 	Audience             = Audiences + "/" + idPlaceholder
@@ -63,6 +71,10 @@ const (
 	WebhookTest         = Webhook + "/test"
 	WebhookDeliveries   = Webhook + "/deliveries"
 	WebhookRotateSecret = Webhook + "/rotate-secret"
+	WebhookDelivery     = WebhookDeliveries + "/" + deliveryPlaceholder
+	WebhookReplay       = WebhookDelivery + "/replay"
+
+	Validate = product + "/validate"
 
 	Stats = product + "/stats"
 )
@@ -72,5 +84,17 @@ func Expand(route, id string) string {
 }
 
 func ExpandContact(route, id, contactID string) string {
-	return strings.Replace(Expand(route, id), contactIDPlaceholder, url.PathEscape(contactID), 1)
+	return expandChild(route, id, contactIDPlaceholder, contactID)
+}
+
+func ExpandVersion(route, id string, version int) string {
+	return expandChild(route, id, versionPlaceholder, strconv.Itoa(version))
+}
+
+func ExpandDelivery(route, id, deliveryID string) string {
+	return expandChild(route, id, deliveryPlaceholder, deliveryID)
+}
+
+func expandChild(route, id, placeholder, child string) string {
+	return strings.Replace(Expand(route, id), placeholder, url.PathEscape(child), 1)
 }

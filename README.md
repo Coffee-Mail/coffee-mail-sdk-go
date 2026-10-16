@@ -42,7 +42,7 @@
 - **Zero dependências de runtime**: só a biblioteca padrão. O transporte é o seu `*http.Client`.
 - **Seguro para concorrência**: crie um `Client` por aplicação e compartilhe entre goroutines.
 - **Retry e paginação automáticos opcionais**: novas tentativas desligadas por padrão (`WithRetry`) e iteradores `iter.Seq2` (`ListAll`) para listas com cursor.
-- **Validado contra o contrato da API**: as 61 operações geram requisições validadas contra o OpenAPI de produto (`spec/product.json`) em `TestConformanceEveryRequestMatchesTheSpec`.
+- **Validado contra o contrato da API**: as 71 operações geram requisições validadas contra o OpenAPI de produto (`spec/product.json`) em `TestConformanceEveryRequestMatchesTheSpec`.
 - **Webhooks verificados com o algoritmo da API**: o subpacote `webhook` passa nos vetores de teste gerados pelo assinador real.
 
 ## 🚦 Status do projeto
@@ -50,7 +50,7 @@
 | Item | Estado |
 | --- | --- |
 | Versão | `0.1.0` (ainda não publicada) |
-| Cobertura da API de produto | 61 operações (todas as do `product.json`, exceto `GET /v1/product/auth/csrf`, exclusiva do dashboard) |
+| Cobertura da API de produto | 71 operações (todas as do `product.json`, exceto `GET /v1/product/auth/csrf`, exclusiva do dashboard) |
 | Idiomas das mensagens de erro | `pt-BR` (padrão) e `en` |
 
 Limitações conhecidas:
@@ -177,7 +177,7 @@ if errors.As(err, &apiErr) {
 | 2xx com corpo ilegível | `INVALID_RESPONSE` | `ErrInvalidResponse` |
 | outro | código da API ou `API_ERROR` | — |
 
-- `APICode` traz o código original da API. Exemplo: um `429` pode ser `RATE_LIMIT_EXCEEDED` (limite de requisições) ou `PLAN_QUOTA_EXCEEDED` (cota do plano esgotada).
+- `APICode` traz o código original da API. Exemplo: um `429` pode ser `RATE_LIMIT_EXCEEDED` (limite de requisições), `PLAN_QUOTA_EXCEEDED` (cota do plano esgotada) ou `VALIDATION_CREDITS_EXHAUSTED` (créditos de validação do mês esgotados).
 - `Details` reúne `meta` e `details` do erro da API (em validação, `Details["issues"]` lista os campos inválidos).
 - `RetryAfter` traz o `Retry-After` informado pela API.
 - Erros de rede preservam a causa: `errors.Is(err, context.DeadlineExceeded)` funciona.
@@ -187,7 +187,7 @@ if errors.As(err, &apiErr) {
 
 Desligadas por padrão. Com `WithRetry(coffeemail.RetryPolicy{MaxAttempts: 3})`:
 
-- repetem só erros de rede, `5xx` e `429` que não sejam `PLAN_QUOTA_EXCEEDED`;
+- repetem só erros de rede, `5xx` e `429` que não sejam `PLAN_QUOTA_EXCEEDED` nem `VALIDATION_CREDITS_EXHAUSTED`;
 - valem para `GET` e `DELETE`. Em `POST`, valem só para `Emails.Send` e `Emails.SendBatch`, que aceitam chave de idempotência. Se você não informar `IdempotencyKey`, o SDK gera uma e a reutiliza em todas as tentativas, então o email nunca é duplicado;
 - usam backoff exponencial com jitter (`BaseDelay` padrão 500ms, teto `MaxDelay` padrão 30s) e respeitam o `Retry-After`, limitado ao teto;
 - param imediatamente quando o `context` é cancelado.
@@ -242,6 +242,13 @@ Parâmetros opcionais podem ser omitidos. Onde o valor zero é significativo (po
 | `Delete(ctx, id)` | `DELETE /domains/{id}` |
 | `GetHealth(ctx, id)` | `POST /domains/{id}/health` |
 | `GetWarmupStatus(ctx, id)` | `GET /domains/{id}/warmup` (nil sem aquecimento) |
+| `RotateDKIM(ctx, id)` | `POST /domains/{id}/dkim/rotate` |
+| `SetTrackingDomain(ctx, id, host)` | `PUT /domains/{id}/tracking-domain` |
+| `RemoveTrackingDomain(ctx, id)` | `DELETE /domains/{id}/tracking-domain` (nil em caso de sucesso) |
+
+`Get` traz também a entregabilidade do domínio: `DKIMRotation` (rotação de DKIM pendente, ou nil), `ReturnPath` e `TrackingDomain` (`*CustomHostStatus` com host, alvo do CNAME, verificação e registro DNS, ou nil) e `TrackingDomainsAvailable`. `GetWarmupStatus` informa a fase (`DomainWarmupWarming` ou `DomainWarmupCompleted`), `TotalDays`, `StartedAt` e `CompletedAt`.
+
+`RotateDKIM` é idempotente: enquanto a rotação está pendente, devolve a mesma rotação; a chave em uso só muda quando o registro TXT do novo seletor aparece no DNS. Domínio não verificado responde `ErrConflict` com `APICode` `DOMAIN_NOT_VERIFIED`. Em `SetTrackingDomain`, host inválido responde `ErrValidation` (`INVALID_TRACKING_HOST`) e recurso desligado na plataforma, `ErrConflict` (`TRACKING_DOMAINS_DISABLED`).
 
 ### Templates — `client.Templates`
 
@@ -257,6 +264,11 @@ Parâmetros opcionais podem ser omitidos. Onde o valor zero é significativo (po
 | `Format(ctx, *FormatTemplateParams)` | `POST /templates/format` |
 | `TestRender(ctx, *TestRenderTemplateParams)` | `POST /templates/test-render` |
 | `TestSend(ctx, id, *TestSendTemplateParams)` | `POST /templates/{id}/test-send` |
+| `ListVersions(ctx, id, *OffsetParams)` | `GET /templates/{id}/versions` (`Limit` de 1 a 100) |
+| `GetVersion(ctx, id, version)` | `GET /templates/{id}/versions/{version}` |
+| `RestoreVersion(ctx, id, version)` | `POST /templates/{id}/versions/{version}/restore` |
+
+`ListVersions` devolve `Data` (`[]TemplateVersionSummary`, da mais recente para a mais antiga) e `Total`; `GetVersion` devolve a versão com o conteúdo completo (`*TemplateVersion`) e `RestoreVersion`, o template já restaurado. Template inexistente responde `ErrNotFound` com `APICode` `TEMPLATE_NOT_FOUND`; versão inexistente, `TEMPLATE_VERSION_NOT_FOUND`. Em `Emails.Send`, `TemplateID` aceita o id ou o alias do template.
 
 ### Audiências e contatos — `client.Audiences`
 
@@ -319,6 +331,18 @@ Toda operação exige chave `full_access`. Sem ela, o erro tem código `PERMISSI
 | `RotateSecret(ctx, id)` | `POST /webhooks/{id}/rotate-secret` |
 | `ListDeliveries(ctx, id, *ListWebhookDeliveriesParams)` | `GET /webhooks/{id}/deliveries` |
 | `Test(ctx, id)` | `POST /webhooks/{id}/test` |
+| `GetDelivery(ctx, id, deliveryID)` | `GET /webhooks/{id}/deliveries/{deliveryId}` |
+| `ReplayDelivery(ctx, id, deliveryID)` | `POST /webhooks/{id}/deliveries/{deliveryId}/replay` |
+
+`GetDelivery` devolve a entrega com o corpo enviado (`RequestPayload`). `ReplayDelivery` reenfileira o mesmo corpo e devolve a entrega nova. Webhook ou entrega inexistentes respondem `ErrNotFound` (`WEBHOOK_NOT_FOUND`, `WEBHOOK_DELIVERY_NOT_FOUND`); entrega ainda pendente ou webhook pausado/desativado, `ErrConflict` (`WEBHOOK_DELIVERY_PENDING`, `WEBHOOK_NOT_ACTIVE`).
+
+### Validação de endereços — `client.Validation`
+
+| Método | Rota |
+| --- | --- |
+| `Validate(ctx, emails)` | `POST /validate` (de 1 a 100 endereços) |
+
+Cada item informa `FormatValid`, `MXValid`, `IsDisposable` e, quando inválido, `Reason`; a resposta traz `ValidCount`, `InvalidCount` e o saldo do mês em `Credits` (`Limit` e `Remaining` são nil quando o plano é ilimitado). Créditos esgotados respondem `ErrRateLimited` com `APICode` `VALIDATION_CREDITS_EXHAUSTED`, que nunca é repetido automaticamente.
 
 ### Estatísticas — `client.Stats`
 
@@ -368,7 +392,7 @@ go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
 ```
 
 - Os testes usam um `RoundTripper` falso injetado por `WithHTTPClient`; nenhum teste acessa a rede.
-- `TestConformanceEveryRequestMatchesTheSpec` valida as requisições das 61 operações contra `spec/product.json` e falha se alguma operação do spec ficar sem método.
+- `TestConformanceEveryRequestMatchesTheSpec` valida as requisições das 71 operações contra `spec/product.json` e falha se alguma operação do spec ficar sem método.
 - `webhook` roda os vetores compartilhados de `testdata/webhook_vectors.json`, gerados pelo assinador da API.
 - Cobertura mínima de 85% no CI.
 

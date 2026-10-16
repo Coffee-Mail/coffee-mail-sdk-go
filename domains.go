@@ -88,6 +88,15 @@ const (
 	DomainHealthCritical DomainHealthStatus = "critical"
 )
 
+// DomainWarmupState é a fase do aquecimento de reputação do domínio.
+type DomainWarmupState string
+
+// Fases do aquecimento.
+const (
+	DomainWarmupWarming   DomainWarmupState = "warming"
+	DomainWarmupCompleted DomainWarmupState = "completed"
+)
+
 // DNSRecord é um registro que deve ser publicado no DNS do domínio.
 type DNSRecord struct {
 	Type             DNSRecordType `json:"type"`
@@ -127,11 +136,40 @@ type Domain struct {
 	CreatedAt     time.Time           `json:"createdAt"`
 }
 
+// DKIMRotation é uma rotação de DKIM pendente. A chave em uso só muda quando o
+// registro TXT do novo seletor for encontrado no DNS.
+type DKIMRotation struct {
+	DomainID  string    `json:"domainId"`
+	Selector  string    `json:"selector"`
+	StartedAt time.Time `json:"startedAt"`
+	Record    DNSRecord `json:"record"`
+}
+
+// CustomHostStatus é o estado de um host próprio do domínio (return-path ou
+// tracking) que aponta, via CNAME, para a plataforma.
+type CustomHostStatus struct {
+	Host       string     `json:"host"`
+	Target     string     `json:"target"`
+	Verified   bool       `json:"verified"`
+	VerifiedAt *time.Time `json:"verifiedAt"`
+	Record     DNSRecord  `json:"record"`
+}
+
 // DomainDetail é o detalhe de um domínio, com identidade de envio e registros DNS.
 type DomainDetail struct {
 	Domain
 	SendingIdentity     *SendingIdentity `json:"sendingIdentity"`
 	DNSRecordsToPublish []DNSRecord      `json:"dnsRecordsToPublish"`
+	// DKIMRotation é a rotação de DKIM em andamento, ou nil quando não há.
+	DKIMRotation *DKIMRotation `json:"dkimRotation"`
+	// ReturnPath é o return-path próprio, ou nil quando a plataforma não o oferece.
+	ReturnPath *CustomHostStatus `json:"returnPath"`
+	// TrackingDomain é o host de tracking próprio, ou nil quando não há host
+	// cadastrado ou o recurso está desligado.
+	TrackingDomain *CustomHostStatus `json:"trackingDomain"`
+	// TrackingDomainsAvailable indica se a plataforma permite cadastrar um host
+	// de tracking próprio.
+	TrackingDomainsAvailable bool `json:"trackingDomainsAvailable"`
 }
 
 // ListDomainsResponse lista os domínios da organização.
@@ -201,10 +239,22 @@ type DomainWarmupStatus struct {
 	RemainingToday   int     `json:"remainingToday"`
 	QuotaUsedPercent int     `json:"quotaUsedPercent"`
 	LastSendDate     *string `json:"lastSendDate"`
+	// Status é warming enquanto a rampa está ativa e completed quando terminou.
+	Status DomainWarmupState `json:"status"`
+	// TotalDays é a duração total da rampa de aquecimento, em dias.
+	TotalDays int `json:"totalDays"`
+	// StartedAt é o início do aquecimento (verificação do domínio).
+	StartedAt time.Time `json:"startedAt"`
+	// CompletedAt é quando o aquecimento terminou, ou nil enquanto está em andamento.
+	CompletedAt *time.Time `json:"completedAt"`
 }
 
 type createDomainBody struct {
 	Name string `json:"name"`
+}
+
+type setTrackingDomainBody struct {
+	Host string `json:"host"`
 }
 
 // DomainsService gerencia domínios de envio.
@@ -246,6 +296,32 @@ func (s *DomainsService) GetHealth(ctx context.Context, id string) (*DomainHealt
 // aquecimento em andamento.
 func (s *DomainsService) GetWarmupStatus(ctx context.Context, id string) (*DomainWarmupStatus, error) {
 	status, err := call[*DomainWarmupStatus](ctx, s.r, get(routes.Expand(routes.DomainWarmup, id)))
+	if err != nil {
+		return nil, err
+	}
+	return *status, nil
+}
+
+// RotateDKIM inicia a rotação da chave DKIM do domínio e devolve o registro TXT
+// do novo seletor a publicar. É idempotente: com uma rotação pendente, devolve a
+// mesma rotação. Exige domínio verificado ([ErrConflict] com APICode
+// DOMAIN_NOT_VERIFIED).
+func (s *DomainsService) RotateDKIM(ctx context.Context, id string) (*DKIMRotation, error) {
+	return call[DKIMRotation](ctx, s.r, post(routes.Expand(routes.DomainDKIMRotate, id), nil))
+}
+
+// SetTrackingDomain cadastra o subdomínio usado nos links de abertura e clique
+// e devolve o CNAME a publicar. Host inválido gera [ErrValidation] (APICode
+// INVALID_TRACKING_HOST); recurso desligado na plataforma gera [ErrConflict]
+// (APICode TRACKING_DOMAINS_DISABLED).
+func (s *DomainsService) SetTrackingDomain(ctx context.Context, id, host string) (*CustomHostStatus, error) {
+	return call[CustomHostStatus](ctx, s.r, put(routes.Expand(routes.DomainTrackingDomain, id), setTrackingDomainBody{Host: host}))
+}
+
+// RemoveTrackingDomain remove o host de tracking próprio do domínio. A API
+// responde sem host cadastrado, então o resultado é nil em caso de sucesso.
+func (s *DomainsService) RemoveTrackingDomain(ctx context.Context, id string) (*CustomHostStatus, error) {
+	status, err := call[*CustomHostStatus](ctx, s.r, del(routes.Expand(routes.DomainTrackingDomain, id)))
 	if err != nil {
 		return nil, err
 	}

@@ -82,7 +82,7 @@ type Tag struct {
 }
 
 // SendEmailParams são os dados de um envio. Informe HTML/Text com Subject, ou
-// TemplateID com Variables.
+// TemplateID com Variables. TemplateID aceita o id ou o alias do template.
 //
 // Sem IdempotencyKey, a API trata envios com payload idêntico como o mesmo envio
 // e devolve o id original.

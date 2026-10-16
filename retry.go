@@ -12,9 +12,10 @@ const (
 // padrão e só é ativado com [WithRetry] e MaxAttempts maior que 1.
 //
 // Só são repetidos erros de rede, respostas 5xx e 429 que não sejam cota do plano
-// esgotada. Requisições GET e DELETE são sempre elegíveis; POST só quando aceita
-// chave de idempotência (envio de email), e nesse caso o SDK gera a chave se ela
-// não for informada, reutilizando-a em todas as tentativas.
+// ou créditos de validação esgotados. Requisições GET e DELETE são sempre
+// elegíveis; POST só quando aceita chave de idempotência (envio de email), e
+// nesse caso o SDK gera a chave se ela não for informada, reutilizando-a em
+// todas as tentativas.
 type RetryPolicy struct {
 	// MaxAttempts é o total de tentativas, incluindo a primeira.
 	MaxAttempts int

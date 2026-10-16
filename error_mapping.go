@@ -15,6 +15,7 @@ import (
 
 const (
 	planQuotaExceeded        = "PLAN_QUOTA_EXCEEDED"
+	validationCreditsOut     = "VALIDATION_CREDITS_EXHAUSTED"
 	fullAccessPermission     = "full_access"
 	detailOperation          = "operation"
 	detailRequiredPermission = "requiredPermission"
@@ -36,6 +37,11 @@ var canonicalCodes = map[int]string{
 	http.StatusBadGateway:          CodeInternalServerError,
 	http.StatusServiceUnavailable:  CodeInternalServerError,
 	http.StatusGatewayTimeout:      CodeInternalServerError,
+}
+
+var exhaustedQuotaCodes = map[string]bool{
+	planQuotaExceeded:    true,
+	validationCreditsOut: true,
 }
 
 var fallbackMessages = map[int]i18n.Key{
@@ -152,7 +158,7 @@ func retryable(apiErr *Error) bool {
 		return true
 	}
 	if apiErr.Status == http.StatusTooManyRequests {
-		return apiErr.APICode != planQuotaExceeded
+		return !exhaustedQuotaCodes[apiErr.APICode]
 	}
 	return apiErr.Status >= minServerErrorStatus
 }

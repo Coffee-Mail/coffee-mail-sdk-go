@@ -10,9 +10,18 @@ Todas as mudanças relevantes deste projeto são documentadas aqui. O formato se
 - `Broadcast.Metrics` (`*BroadcastMetrics`) com entregues, abertos, cliques, bounces, falhas e suprimidos, preenchido em `Get`.
 - `SendersService.ResendVerification` reenvia o email de verificação com token novo.
 - `Contact.Subscribed` e `Contact.IsSubscribed()` (`false` quando o contato se descadastrou).
+- `DomainsService.RotateDKIM` inicia a rotação da chave DKIM (idempotente) e devolve `*DKIMRotation` com o registro TXT do novo seletor.
+- `DomainsService.SetTrackingDomain` e `DomainsService.RemoveTrackingDomain` cadastram e removem o host de tracking próprio (`*CustomHostStatus`).
+- `DomainDetail.DKIMRotation`, `DomainDetail.ReturnPath`, `DomainDetail.TrackingDomain` e `DomainDetail.TrackingDomainsAvailable` em `DomainsService.Get`.
+- `DomainWarmupStatus.Status` (`DomainWarmupWarming`/`DomainWarmupCompleted`), `TotalDays`, `StartedAt` e `CompletedAt`.
+- `TemplatesService.ListVersions`, `GetVersion` e `RestoreVersion` listam, detalham e restauram versões de um template (`TemplateVersionSummary`, `TemplateVersion`, `ListTemplateVersionsResponse`).
+- `WebhooksService.GetDelivery` (entrega com `RequestPayload`, `*WebhookDeliveryDetail`) e `WebhooksService.ReplayDelivery` (reenfileira o mesmo corpo e devolve a entrega nova).
+- `Client.Validation` (`ValidationService.Validate`) valida até 100 endereços e devolve o saldo de créditos do mês (`ValidateEmailsResponse`, `EmailValidation`, `ValidationCredits`).
 
 ### Alterado
 
+- `SendEmailParams.TemplateID` aceita o id ou o alias do template.
+- 429 com `APICode` `VALIDATION_CREDITS_EXHAUSTED` não é repetido pelo retry automático, como `PLAN_QUOTA_EXCEEDED`.
 - `BroadcastsService.Send` responde assim que o envio é enfileirado (`BroadcastStatusSending`); o progresso acompanha-se por `Get`.
 
 ### Depreciado
