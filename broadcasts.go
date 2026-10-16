@@ -33,14 +33,27 @@ const (
 // CreateBroadcastParams são os dados de um broadcast novo. Informe TemplateID ou
 // Subject com HTML/Text.
 type CreateBroadcastParams struct {
-	AudienceID string         `json:"audienceId"`
-	FromEmail  string         `json:"fromEmail"`
-	TemplateID string         `json:"templateId,omitzero"`
-	Subject    string         `json:"subject,omitzero"`
-	HTML       string         `json:"html,omitzero"`
-	Text       string         `json:"text,omitzero"`
-	ReplyTo    string         `json:"replyTo,omitzero"`
-	Variables  map[string]any `json:"variables,omitzero"`
+	AudienceID string `json:"audienceId"`
+	FromEmail  string `json:"fromEmail"`
+	TemplateID string `json:"templateId,omitzero"`
+	Subject    string `json:"subject,omitzero"`
+	HTML       string `json:"html,omitzero"`
+	Text       string `json:"text,omitzero"`
+	ReplyTo    string `json:"replyTo,omitzero"`
+	// ScheduledAt agenda o envio para um instante futuro; o broadcast nasce
+	// [BroadcastStatusScheduled].
+	ScheduledAt time.Time      `json:"scheduledAt,omitzero"`
+	Variables   map[string]any `json:"variables,omitzero"`
+}
+
+// BroadcastMetrics são as métricas agregadas de entrega de um broadcast.
+type BroadcastMetrics struct {
+	Delivered  int `json:"delivered"`
+	Opened     int `json:"opened"`
+	Clicked    int `json:"clicked"`
+	Bounced    int `json:"bounced"`
+	Failed     int `json:"failed"`
+	Suppressed int `json:"suppressed"`
 }
 
 // Broadcast é um envio em massa para uma audiência.
@@ -59,8 +72,10 @@ type Broadcast struct {
 	RecipientsTotal  int             `json:"recipientsTotal"`
 	RecipientsQueued int             `json:"recipientsQueued"`
 	RecipientsFailed int             `json:"recipientsFailed"`
-	CreatedAt        time.Time       `json:"createdAt"`
-	UpdatedAt        time.Time       `json:"updatedAt"`
+	// Metrics vem preenchido em Get.
+	Metrics   *BroadcastMetrics `json:"metrics"`
+	CreatedAt time.Time         `json:"createdAt"`
+	UpdatedAt time.Time         `json:"updatedAt"`
 }
 
 // ListBroadcastsParams filtra a listagem de broadcasts. Todos os campos são opcionais.

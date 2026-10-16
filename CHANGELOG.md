@@ -4,6 +4,21 @@ Todas as mudanças relevantes deste projeto são documentadas aqui. O formato se
 
 ## [Não lançado]
 
+### Adicionado
+
+- `CreateBroadcastParams.ScheduledAt` agenda o broadcast (ele nasce `BroadcastStatusScheduled`).
+- `Broadcast.Metrics` (`*BroadcastMetrics`) com entregues, abertos, cliques, bounces, falhas e suprimidos, preenchido em `Get`.
+- `SendersService.ResendVerification` reenvia o email de verificação com token novo.
+- `Contact.Subscribed` e `Contact.IsSubscribed()` (`false` quando o contato se descadastrou).
+
+### Alterado
+
+- `BroadcastsService.Send` responde assim que o envio é enfileirado (`BroadcastStatusSending`); o progresso acompanha-se por `Get`.
+
+### Depreciado
+
+- `CreatedSender.VerificationToken`: a API não devolve mais o token, que segue por email ao endereço cadastrado; o campo vem vazio.
+
 ## [0.1.0] - Não publicado
 
 ### Adicionado

@@ -23,10 +23,13 @@ type Sender struct {
 	CreatedAt   time.Time  `json:"createdAt"`
 }
 
-// CreatedSender é o remetente criado, com o token de verificação.
+// CreatedSender é o remetente criado. O token de verificação segue por email ao
+// endereço cadastrado.
 type CreatedSender struct {
 	Sender
-	VerificationToken string `json:"verificationToken"`
+	// Deprecated: a API não devolve mais o token; o campo vem sempre vazio. A
+	// verificação acontece pelo link enviado ao email do remetente.
+	VerificationToken string `json:"verificationToken,omitzero"`
 }
 
 // ListSendersResponse lista os remetentes.
@@ -62,6 +65,12 @@ func (s *SendersService) List(ctx context.Context) (*ListSendersResponse, error)
 // Verify confirma um remetente com o token recebido por email.
 func (s *SendersService) Verify(ctx context.Context, token string) (*VerifySenderResponse, error) {
 	return call[VerifySenderResponse](ctx, s.r, post(routes.SendersVerify, verifySenderBody{Token: token}))
+}
+
+// ResendVerification reenvia o email de verificação com um token novo; o anterior
+// expira.
+func (s *SendersService) ResendVerification(ctx context.Context, id string) error {
+	return s.r.do(ctx, post(routes.Expand(routes.SenderResend, id), nil), nil)
 }
 
 // Delete remove um remetente.
